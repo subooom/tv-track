@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { Star, Share2, Heart, Bell, Calendar, Play, Check, Zap, User, Lock } from "lucide-react";
+import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function App() {
@@ -151,9 +152,15 @@ export default function App() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+return (
+  <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
+    <Helmet>
+      <title>{selectedShow ? `${selectedShow.name} | TVTRACK` : "TVTRACK | Precise Release Timers"}</title>
+      <meta name="description" content={selectedShow?.summary?.replace(/<[^>]*>?/gm, '').slice(0, 150) || "Track your favorite TV shows with precision."} />
+    </Helmet>
 
-  return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
+    {/* Navbar */}
+
       <nav className="fixed top-0 left-0 right-0 h-[72px] border-b border-border bg-background/80 backdrop-blur-xl z-50 flex items-center px-6">
         <div className="max-w-7xl mx-auto w-full flex justify-between items-center gap-8">
           <button onClick={goHome} className="text-xl font-black tracking-tighter flex items-center gap-2 group cursor-pointer flex-shrink-0">
