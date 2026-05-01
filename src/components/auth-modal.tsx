@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, Mail, Facebook } from "lucide-react";
+import { Shield, Mail } from "lucide-react";
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
@@ -130,7 +130,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
 
         <div className="grid grid-cols-2 gap-4">
           <Button variant="outline" className="rounded-xl font-bold gap-2" onClick={() => handleSocialAuth('facebook')}>
-            <Facebook className="h-4 w-4 fill-[#1877F2] text-[#1877F2]" /> Facebook
+            <Shield className="h-4 w-4 fill-[#1877F2] text-[#1877F2]" /> Facebook
           </Button>
           <Button variant="outline" className="rounded-xl font-bold gap-2" onClick={() => handleSocialAuth('google')}>
              Google
