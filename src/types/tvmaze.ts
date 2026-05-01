@@ -2,6 +2,8 @@ export interface TVShow {
   id: number;
   name: string;
   url: string;
+  type?: string;
+  language?: string;
   genres: string[];
   status: string;
   runtime: number;

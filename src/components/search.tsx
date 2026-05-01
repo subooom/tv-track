@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Search as SearchIcon } from "lucide-react";
-import { TVShow, SearchResult } from "@/types/tvmaze";
+import type { TVShow, SearchResult } from "../types/tvmaze"; // Using relative path
 import {
   CommandDialog,
   CommandEmpty,
@@ -79,9 +79,12 @@ export function Search({ onSelect }: SearchProps) {
             {results.map((result) => (
               <CommandItem
                 key={result.show.id}
+                value={result.show.name}
                 onSelect={() => {
+                  console.log("Selected:", result.show.name);
                   onSelect(result.show);
                   setOpen(false);
+                  setQuery("");
                 }}
                 className="flex items-center gap-4 p-2 cursor-pointer"
               >
