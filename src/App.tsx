@@ -1,9 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { Search } from "@/components/search";
 import { ShowCard } from "@/components/show-card";
 import { CountdownTimer } from "@/components/countdown-timer";
 import { MediaSection } from "@/components/media-section";
-import { WaitlistModal } from "@/components/waitlist-modal";
 import { AuthModal } from "@/components/auth-modal";
 import { UserDropdown } from "@/components/user-dropdown";
 import { SettingsModal } from "@/components/settings-modal";
@@ -11,21 +11,20 @@ import { ProfilePage } from "@/components/profile-page";
 import { Toaster } from "@/components/ui/toaster";
 import { syncProfile } from "@/lib/sync";
 import { auth } from "@/lib/firebase";
-import { getGoogleCalendarUrl } from "@/lib/calendar";
-import { onAuthStateChanged, signOut, type User as FirebaseUser } from "firebase/auth";
+import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
 import type { TVShow, Episode } from "@/types/tvmaze";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { Star, Share2, Heart, Bell, Calendar, Play, Check, Zap, User, Lock } from "lucide-react";
-import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
+import { WaitlistModal } from "./components/waitlist-modal";
 
 export default function App() {
   const [selectedShow, setSelectedShow] = useState<TVShow | null>(null);
   const [nextEpisode, setNextEpisode] = useState<Episode | null>(null);
-  const [upcomingEpisodes, setUpcomingEpisodes] = useState<Episode[]>([]);
+  const [, setUpcomingEpisodes] = useState<Episode[]>([]);
   const [trending, setTrending] = useState<TVShow[]>([]);
   const [watchlistShows, setWatchlistShows] = useState<TVShow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,6 +49,36 @@ export default function App() {
       setIsPremium(!!currentUser);
     });
   }, []);
+
+  const handleSelectShow = async (show: TVShow) => {
+    setLoading(true);
+    const url = new URL(window.location.href);
+    url.searchParams.set("id", show.id.toString());
+    window.history.pushState({}, "", url.toString());
+
+    try {
+      const res = await fetch(`https://api.tvmaze.com/shows/${show.id}?embed=episodes`);
+      const fullShow = await res.json();
+      setSelectedShow(fullShow);
+
+      const episodes = fullShow._embedded?.episodes || [];
+      const now = new Date();
+      
+      const upcoming = episodes.filter((ep: Episode) => {
+        const airtime = ep.airstamp ? new Date(ep.airstamp) : new Date(ep.airdate + 'T23:59:59');
+        return airtime > now;
+      });
+
+      setNextEpisode(upcoming.length > 0 ? upcoming[0] : null);
+      setUpcomingEpisodes(upcoming.slice(1, 13));
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   // Deep linking: Load show from URL on mount
   useEffect(() => {
@@ -105,35 +134,6 @@ export default function App() {
     loadWatchlist();
   }, [watchlist]);
 
-  const handleSelectShow = async (show: TVShow) => {
-    setLoading(true);
-    const url = new URL(window.location.href);
-    url.searchParams.set("id", show.id.toString());
-    window.history.pushState({}, "", url.toString());
-
-    try {
-      const res = await fetch(`https://api.tvmaze.com/shows/${show.id}?embed=episodes`);
-      const fullShow = await res.json();
-      setSelectedShow(fullShow);
-
-      const episodes = fullShow._embedded?.episodes || [];
-      const now = new Date();
-      
-      const upcoming = episodes.filter((ep: Episode) => {
-        const airtime = ep.airstamp ? new Date(ep.airstamp) : new Date(ep.airdate + 'T23:59:59');
-        return airtime > now;
-      });
-
-      setNextEpisode(upcoming.length > 0 ? upcoming[0] : null);
-      setUpcomingEpisodes(upcoming.slice(1, 13));
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const toggleWatchlist = (id: number) => {
     setWatchlist(prev => 
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
@@ -152,15 +152,9 @@ export default function App() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-return (
-  <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
-    <Helmet>
-      <title>{selectedShow ? `${selectedShow.name} | TVTRACK` : "TVTRACK | Precise Release Timers"}</title>
-      <meta name="description" content={selectedShow?.summary?.replace(/<[^>]*>?/gm, '').slice(0, 150) || "Track your favorite TV shows with precision."} />
-    </Helmet>
 
-    {/* Navbar */}
-
+  return (
+    <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
       <nav className="fixed top-0 left-0 right-0 h-[72px] border-b border-border bg-background/80 backdrop-blur-xl z-50 flex items-center px-6">
         <div className="max-w-7xl mx-auto w-full flex justify-between items-center gap-8">
           <button onClick={goHome} className="text-xl font-black tracking-tighter flex items-center gap-2 group cursor-pointer flex-shrink-0">
@@ -328,6 +322,13 @@ return (
                   </div>
                 </div>
               </div>
+
+              <MediaSection 
+                show={selectedShow} 
+                nextEpisode={nextEpisode}
+                isPremium={isPremium}
+                onRequirePremium={() => setIsWaitlistOpen(true)}
+              />
             </motion.div>
           ) : (
             <motion.div
