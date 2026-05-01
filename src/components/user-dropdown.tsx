@@ -1,4 +1,4 @@
-import { LogOut, Settings, User as UserIcon, Zap, Calendar } from "lucide-react";
+import { LogOut, Settings, User as UserIcon, Zap, Calendar, UserCircle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,16 +9,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { signOut, User as FirebaseUser } from "firebase/auth";
+import { signOut, type User as FirebaseUser } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
 interface UserDropdownProps {
   user: FirebaseUser;
   isPremium: boolean;
+  onOpenProfile: () => void;
   onOpenSettings: () => void;
 }
 
-export function UserDropdown({ user, isPremium, onOpenSettings }: UserDropdownProps) {
+export function UserDropdown({ user, isPremium, onOpenProfile, onOpenSettings }: UserDropdownProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -30,7 +31,7 @@ export function UserDropdown({ user, isPremium, onOpenSettings }: UserDropdownPr
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end">
+      <DropdownMenuContent className="w-56 z-[100]" align="end">
         <DropdownMenuLabel>
           <div className="flex flex-col">
             <span className="font-bold">{user.displayName || "User"}</span>
@@ -39,6 +40,9 @@ export function UserDropdown({ user, isPremium, onOpenSettings }: UserDropdownPr
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
+          <DropdownMenuItem onClick={onOpenProfile}>
+            <UserCircle className="mr-2 h-4 w-4" /> Profile
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={onOpenSettings}>
             <Settings className="mr-2 h-4 w-4" /> Settings
           </DropdownMenuItem>

@@ -54,16 +54,19 @@ export function PricingDialog({ open, onOpenChange, onUpgrade }: PricingDialogPr
                 <Check className="h-4 w-4 text-primary" /> Cloud Watchlist Sync
               </li>
               <li className="flex items-center gap-3 text-sm font-bold">
-                <Check className="h-4 w-4 text-primary" /> Desktop & Mobile Alerts
+                <Check className="h-4 w-4 text-primary" /> Smart Push Alerts
               </li>
               <li className="flex items-center gap-3 text-sm font-bold">
-                <Check className="h-4 w-4 text-primary" /> Deep Streaming Links
+                <Check className="h-4 w-4 text-primary" /> Personal Calendar Feed
               </li>
               <li className="flex items-center gap-3 text-sm font-bold">
-                <Check className="h-4 w-4 text-primary" /> Ad-Free Experience
+                <Check className="h-4 w-4 text-primary" /> Spoiler-Free Mode
+              </li>
+              <li className="flex items-center gap-3 text-sm font-bold">
+                <Check className="h-4 w-4 text-primary" /> Streaming Deep Links
               </li>
               <li className="flex items-center gap-3 text-sm font-bold text-primary">
-                <Check className="h-4 w-4" /> Personal Calendar Feed
+                <Check className="h-4 w-4" /> Advanced Watch Stats
               </li>
             </ul>
             <Button className="w-full rounded-xl font-black bg-primary text-primary-foreground hover:scale-[1.02] transition-transform" onClick={onUpgrade}>

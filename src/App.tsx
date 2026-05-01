@@ -3,8 +3,13 @@ import { Search } from "@/components/search";
 import { ShowCard } from "@/components/show-card";
 import { CountdownTimer } from "@/components/countdown-timer";
 import { MediaSection } from "@/components/media-section";
-import { PricingDialog } from "@/components/pricing-dialog";
+import { WaitlistModal } from "@/components/waitlist-modal";
 import { AuthModal } from "@/components/auth-modal";
+import { UserDropdown } from "@/components/user-dropdown";
+import { SettingsModal } from "@/components/settings-modal";
+import { ProfilePage } from "@/components/profile-page";
+import { Toaster } from "@/components/ui/toaster";
+import { syncProfile } from "@/lib/sync";
 import { auth } from "@/lib/firebase";
 import { getGoogleCalendarUrl } from "@/lib/calendar";
 import { onAuthStateChanged, signOut, type User as FirebaseUser } from "firebase/auth";
@@ -27,8 +32,10 @@ export default function App() {
   const [copied, setCopied] = useState(false);
   
   // UI State
-  const [isPricingOpen, setIsPricingOpen] = useState(false);
+  const [isWaitlistOpen, setIsWaitlistOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
   const [user, setUser] = useState<FirebaseUser | null>(null);
 
@@ -36,7 +43,9 @@ export default function App() {
   useEffect(() => {
     return onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      // For now, let's say anyone logged in is "Premium" for the prototype
+      if (currentUser) {
+        syncProfile(currentUser);
+      }
       setIsPremium(!!currentUser);
     });
   }, []);
@@ -59,7 +68,6 @@ export default function App() {
         const res = await fetch('https://api.tvmaze.com/schedule?country=US');
         const data = await res.json();
         
-        // Deduplicate and filter shows with images
         const uniqueShows = Array.from(new Map(data.map((item: any) => [item.show.id, item.show])).values())
           .filter((show: any) => show.image)
           .sort((a: any, b: any) => (b.rating?.average || 0) - (a.rating?.average || 0))
@@ -98,7 +106,6 @@ export default function App() {
 
   const handleSelectShow = async (show: TVShow) => {
     setLoading(true);
-    // Update URL
     const url = new URL(window.location.href);
     url.searchParams.set("id", show.id.toString());
     window.history.pushState({}, "", url.toString());
@@ -117,8 +124,7 @@ export default function App() {
       });
 
       setNextEpisode(upcoming.length > 0 ? upcoming[0] : null);
-      setUpcomingEpisodes(upcoming.slice(1, 13)); // Next 12 after the immediate one
-      
+      setUpcomingEpisodes(upcoming.slice(1, 13));
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error) {
       console.error(error);
@@ -148,7 +154,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
-      {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 h-[72px] border-b border-border bg-background/80 backdrop-blur-xl z-50 flex items-center px-6">
         <div className="max-w-7xl mx-auto w-full flex justify-between items-center gap-8">
           <button onClick={goHome} className="text-xl font-black tracking-tighter flex items-center gap-2 group cursor-pointer flex-shrink-0">
@@ -164,25 +169,19 @@ export default function App() {
               <Button 
                 variant="outline" 
                 className="hidden sm:flex border-primary/20 text-primary hover:bg-primary/10 rounded-full font-bold gap-2"
-                onClick={() => setIsPricingOpen(true)}
+                onClick={() => setIsWaitlistOpen(true)}
               >
                 <Zap className="h-4 w-4 fill-primary" /> Upgrade
               </Button>
             )}
             
             {user ? (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="rounded-full bg-secondary overflow-hidden border border-border"
-                onClick={() => signOut(auth)}
-              >
-                 {user.photoURL ? (
-                   <img src={user.photoURL} className="h-full w-full object-cover" alt="" />
-                 ) : (
-                   <User className="h-5 w-5" />
-                 )}
-              </Button>
+              <UserDropdown 
+                user={user} 
+                isPremium={isPremium} 
+                onOpenProfile={() => setIsProfileOpen(true)}
+                onOpenSettings={() => setIsSettingsOpen(true)}
+              />
             ) : (
               <Button 
                 variant="ghost" 
@@ -197,19 +196,28 @@ export default function App() {
         </div>
       </nav>
 
-      {/* Pricing & Auth Modals */}
-      <PricingDialog 
-        open={isPricingOpen} 
-        onOpenChange={setIsPricingOpen} 
-        onUpgrade={() => {
-          setIsPricingOpen(false);
-          setIsAuthOpen(true);
-        }}
+      <WaitlistModal 
+        open={isWaitlistOpen} 
+        onOpenChange={setIsWaitlistOpen} 
       />
       <AuthModal 
         open={isAuthOpen} 
         onOpenChange={setIsAuthOpen} 
       />
+      <SettingsModal 
+        open={isSettingsOpen} 
+        onOpenChange={setIsSettingsOpen} 
+        isPremium={isPremium} 
+      />
+      {user && (
+        <ProfilePage 
+          open={isProfileOpen} 
+          onOpenChange={setIsProfileOpen} 
+          user={user} 
+          isPremium={isPremium}
+        />
+      )}
+      <Toaster />
 
       <main className="pt-[72px] pb-20 px-6 max-w-7xl mx-auto">
         <AnimatePresence mode="wait">
@@ -285,12 +293,11 @@ export default function App() {
                       {watchlist.includes(selectedShow.id) ? "In Watchlist" : "Add to Watchlist"}
                     </Button>
 
-                    {/* Pro Calendar */}
                     <Button 
                       variant="secondary" 
                       size="icon" 
                       className="h-14 w-14 rounded-xl border border-border relative group"
-                      onClick={() => !isPremium && setIsPricingOpen(true)}
+                      onClick={() => !isPremium && setIsWaitlistOpen(true)}
                     >
                       <Calendar className="h-5 w-5 text-primary" />
                       {!isPremium && <Lock className="h-3 w-3 absolute -top-1 -right-1 text-muted-foreground" />}
@@ -299,12 +306,11 @@ export default function App() {
                       </div>
                     </Button>
 
-                    {/* Pro Alerts */}
                     <Button 
                       variant="secondary" 
                       size="icon" 
                       className="h-14 w-14 rounded-xl border border-border relative group"
-                      onClick={() => !isPremium && setIsPricingOpen(true)}
+                      onClick={() => !isPremium && setIsWaitlistOpen(true)}
                     >
                       <Bell className="h-5 w-5 text-primary" />
                       {!isPremium && <Lock className="h-3 w-3 absolute -top-1 -right-1 text-muted-foreground" />}
@@ -313,55 +319,8 @@ export default function App() {
                       </div>
                     </Button>
                   </div>
-
-                  <div className="mt-12 p-6 rounded-2xl bg-background/50 border border-border grid sm:grid-cols-2 gap-6">
-                    <div>
-                      <div className="text-[10px] uppercase font-black text-muted-foreground tracking-widest mb-1">🌍 Original Broadcast</div>
-                      <div className="font-bold">
-                        {nextEpisode?.airtime || "N/A"} on {selectedShow.network?.name || selectedShow.webChannel?.name} ({selectedShow.network?.country?.name || "US"})
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-[10px] uppercase font-black text-muted-foreground tracking-widest mb-1">📍 Local Time</div>
-                      <div className="font-bold">
-                        {nextEpisode ? new Date(nextEpisode.airstamp || nextEpisode.airdate).toLocaleString([], { dateStyle: 'full', timeStyle: 'short' }) : "N/A"}
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
-
-              {/* Upcoming Episodes Grid */}
-              {upcomingEpisodes.length > 0 && (
-                <section className="mt-20">
-                  <h2 className="text-2xl font-black tracking-tighter mb-8 flex items-center gap-2">
-                    <Calendar className="h-6 w-6 text-primary" />
-                    Future Episodes
-                  </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {upcomingEpisodes.map((ep) => (
-                      <div key={ep.id} className="bg-secondary/30 border border-border rounded-2xl p-6 flex gap-4 items-center hover:bg-secondary/50 transition-colors">
-                        <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary font-black">
-                          {ep.season}x{ep.number}
-                        </div>
-                        <div>
-                          <div className="font-bold line-clamp-1">{ep.name}</div>
-                          <div className="text-xs text-muted-foreground font-medium">
-                            {new Date(ep.airstamp || ep.airdate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              <MediaSection 
-                show={selectedShow} 
-                nextEpisode={nextEpisode}
-                isPremium={isPremium}
-                onRequirePremium={() => setIsPricingOpen(true)}
-              />
             </motion.div>
           ) : (
             <motion.div
@@ -379,7 +338,6 @@ export default function App() {
               </p>
               
               <div className="flex flex-col gap-20">
-                {/* Watchlist Section */}
                 {watchlistShows.length > 0 && (
                   <section>
                     <div className="flex items-center justify-between mb-8">
@@ -396,7 +354,6 @@ export default function App() {
                   </section>
                 )}
 
-                {/* Trending Section */}
                 <section>
                   <div className="flex items-center justify-between mb-8">
                     <h2 className="text-2xl font-black tracking-tighter flex items-center gap-2">
