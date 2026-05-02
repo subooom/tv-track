@@ -12,6 +12,7 @@ import { WaitlistModal } from '@/components/waitlist-modal'
 import { useState, useEffect } from 'react'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
+import { Helmet } from 'react-helmet-async'
 
 export const Route = createFileRoute('/show/$id')({
   component: ShowDetailComponent,
@@ -32,6 +33,7 @@ function ShowDetailComponent() {
       })
     }
   }, [id])
+
   const [isWaitlistOpen, setIsWaitlistOpen] = useState(false)
   const [isPremium, setIsPremium] = useState(false)
 
@@ -73,8 +75,22 @@ function ShowDetailComponent() {
   if (isLoading) return <div className="py-20 text-center font-bold text-2xl">Loading show details...</div>
   if (error || !selectedShow) return <div className="py-20 text-center font-bold text-2xl text-red-500">Error loading show details.</div>
 
+  const seoTitle = `${selectedShow.name} Countdown | TVTRACK`;
+  const seoDesc = `When is the next episode of ${selectedShow.name}? Get real-time countdowns, schedule, and episode info on TVTRACK.`;
+
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-8 space-y-12">
+      <Helmet>
+        <title>{seoTitle}</title>
+        <meta name="description" content={seoDesc} />
+        <meta property="og:title" content={seoTitle} />
+        <meta property="og:description" content={seoDesc} />
+        <meta property="og:image" content={selectedShow.image?.original || selectedShow.image?.medium} />
+        <meta name="twitter:title" content={seoTitle} />
+        <meta name="twitter:description" content={seoDesc} />
+        <meta name="twitter:image" content={selectedShow.image?.original || selectedShow.image?.medium} />
+      </Helmet>
+
       <div className="grid lg:grid-cols-[350px_1fr] gap-12 bg-secondary/50 rounded-3xl overflow-hidden border border-border shadow-2xl">
         <div className="aspect-[2/3] lg:aspect-auto">
           <img src={selectedShow.image?.original || selectedShow.image?.medium || ""} className="w-full h-full object-cover" alt="" />

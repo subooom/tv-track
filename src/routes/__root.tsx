@@ -1,4 +1,4 @@
-import { createRootRoute, Outlet } from '@tanstack/react-router'
+import { createRootRoute, Outlet, Link } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/router-devtools'
 import { Navbar } from '@/components/layout/navbar'
 import { Toaster } from '@/components/ui/toaster'
@@ -8,6 +8,7 @@ import { auth } from '@/lib/firebase'
 import { syncProfile } from '@/lib/sync'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { HelmetProvider, Helmet } from 'react-helmet-async'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,19 +38,17 @@ function Footer() {
         <div>
           <h4 className="font-bold mb-4">Platform</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>Weekly Schedule</li>
-            <li>Trending Shows</li>
-            <li>Pro Features</li>
-            <li>API Integration</li>
+            <li><Link to="/schedule" className="hover:text-primary transition-colors">Weekly Schedule</Link></li>
+            <li><Link to="/" className="hover:text-primary transition-colors">Trending Shows</Link></li>
+            <li><span className="opacity-50 cursor-not-allowed">Pro Features (Soon)</span></li>
           </ul>
         </div>
         <div>
-          <h4 className="font-bold mb-4">Connect</h4>
+          <h4 className="font-bold mb-4">Support</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>Twitter / X</li>
-            <li>Discord Community</li>
-            <li>Support Email</li>
-            <li>Privacy Policy</li>
+            <li><Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
+            <li><Link to="/tos" className="hover:text-primary transition-colors">Terms of Service</Link></li>
+            <li><a href="mailto:support@tvtrack.app" className="hover:text-primary transition-colors">Contact Support</a></li>
           </ul>
         </div>
       </div>
@@ -73,20 +72,30 @@ function RootComponent() {
   }, [])
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-primary-foreground flex flex-col">
-        <Navbar 
-          user={user} 
-          isPremium={isPremium} 
-        />
-        <main className="pt-[72px] flex-1 px-6 max-w-7xl mx-auto w-full">
-          <Outlet />
-        </main>
-        <Footer />
-        <Toaster />
-        <TanStackRouterDevtools />
-        <ReactQueryDevtools />
-      </div>
-    </QueryClientProvider>
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-primary-foreground flex flex-col">
+          <Helmet>
+            <title>TVTRACK | Live TV Show Countdowns</title>
+            <meta name="description" content="Track your favorite TV shows with real-time countdowns, global schedules, and personalized watchlists." />
+            <meta property="og:type" content="website" />
+            <meta property="og:site_name" content="TVTRACK" />
+            <meta name="twitter:card" content="summary_large_image" />
+          </Helmet>
+          
+          <Navbar 
+            user={user} 
+            isPremium={isPremium} 
+          />
+          <main className="pt-[72px] flex-1 px-6 max-w-7xl mx-auto w-full">
+            <Outlet />
+          </main>
+          <Footer />
+          <Toaster />
+          <TanStackRouterDevtools />
+          <ReactQueryDevtools />
+        </div>
+      </QueryClientProvider>
+    </HelmetProvider>
   )
 }

@@ -9,12 +9,19 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TosRouteImport } from './routes/tos'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ScheduleRouteImport } from './routes/schedule'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ShowIdRouteImport } from './routes/show.$id'
 
+const TosRoute = TosRouteImport.update({
+  id: '/tos',
+  path: '/tos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -30,6 +37,11 @@ const ProfileRoute = ProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -43,44 +55,81 @@ const ShowIdRoute = ShowIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/schedule': typeof ScheduleRoute
   '/settings': typeof SettingsRoute
+  '/tos': typeof TosRoute
   '/show/$id': typeof ShowIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/schedule': typeof ScheduleRoute
   '/settings': typeof SettingsRoute
+  '/tos': typeof TosRoute
   '/show/$id': typeof ShowIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/schedule': typeof ScheduleRoute
   '/settings': typeof SettingsRoute
+  '/tos': typeof TosRoute
   '/show/$id': typeof ShowIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/profile' | '/schedule' | '/settings' | '/show/$id'
+  fullPaths:
+    | '/'
+    | '/privacy'
+    | '/profile'
+    | '/schedule'
+    | '/settings'
+    | '/tos'
+    | '/show/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/profile' | '/schedule' | '/settings' | '/show/$id'
-  id: '__root__' | '/' | '/profile' | '/schedule' | '/settings' | '/show/$id'
+  to:
+    | '/'
+    | '/privacy'
+    | '/profile'
+    | '/schedule'
+    | '/settings'
+    | '/tos'
+    | '/show/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/privacy'
+    | '/profile'
+    | '/schedule'
+    | '/settings'
+    | '/tos'
+    | '/show/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
   ScheduleRoute: typeof ScheduleRoute
   SettingsRoute: typeof SettingsRoute
+  TosRoute: typeof TosRoute
   ShowIdRoute: typeof ShowIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tos': {
+      id: '/tos'
+      path: '/tos'
+      fullPath: '/tos'
+      preLoaderRoute: typeof TosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -102,6 +151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -121,9 +177,11 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
   ScheduleRoute: ScheduleRoute,
   SettingsRoute: SettingsRoute,
+  TosRoute: TosRoute,
   ShowIdRoute: ShowIdRoute,
 }
 export const routeTree = rootRouteImport
