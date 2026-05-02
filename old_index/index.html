@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TVTRACK | Precise Release Timers</title>
+    <style>
+        :root {
+            --background: 240 10% 3.9%;
+            --foreground: 0 0% 98%;
+            --card: 240 10% 3.9%;
+            --card-foreground: 0 0% 98%;
+            --primary: 217.2 91.2% 59.8%;
+            --primary-foreground: 222.2 47.4% 11.2%;
+            --secondary: 240 3.7% 15.9%;
+            --muted: 240 3.7% 15.9%;
+            --muted-foreground: 240 5% 64.9%;
+            --border: 240 3.7% 15.9%;
+            --radius: 0.75rem;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, system-ui, sans-serif;
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Navbar */
+        nav {
+            height: 72px;
+            border-bottom: 1px solid hsl(var(--border));
+            background: hsla(var(--background), 0.8);
+            backdrop-filter: blur(16px);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+        }
+
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 900;
+            letter-spacing: -0.05em;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .logo span { color: hsl(var(--primary)); }
+
+        .search-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .search-wrapper input {
+            width: 100%;
+            height: 44px;
+            background: hsl(var(--secondary));
+            border: 1px solid hsl(var(--border));
+            border-radius: 100px;
+            padding: 0 1.5rem;
+            color: white;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        .search-wrapper input:focus {
+            outline: none;
+            border-color: hsl(var(--primary));
+            box-shadow: 0 0 0 4px hsla(var(--primary), 0.15);
+        }
+
+        /* Hero */
+        .hero {
+            padding: 8rem 2rem 4rem;
+            text-align: center;
+            background: radial-gradient(circle at top, hsla(var(--primary), 0.15) 0%, transparent 70%);
+            border-bottom: 1px solid hsl(var(--border));
+        }
+
+        .hero h1 {
+            font-size: 4.5rem;
+            font-weight: 900;
+            letter-spacing: -0.06em;
+            line-height: 0.9;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: hsl(var(--muted-foreground));
+            max-width: 700px;
+            margin: 0 auto 2.5rem;
+        }
+
+        /* Main Content */
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 2rem 5rem;
+            margin-top: 72px; /* Fix for fixed navbar */
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+        }
+
+        /* Show Cards */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 2rem;
+        }
+
+        .card {
+            background: hsl(var(--secondary));
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            border: 1px solid transparent;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:hover {
+            transform: translateY(-8px) scale(1.02);
+            border-color: hsla(var(--primary), 0.5);
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
+        }
+
+        .card img {
+            width: 100%;
+            aspect-ratio: 2/3;
+            object-fit: cover;
+        }
+
+        .card-info { padding: 1rem; flex-grow: 1; }
+        .card-title { font-weight: 700; font-size: 1rem; margin-bottom: 0.25rem; }
+        .card-meta { font-size: 0.8rem; color: hsl(var(--muted-foreground)); font-weight: 500; }
+
+        /* Countdown View */
+        .countdown-view-container {
+            margin-top: 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .countdown-hero {
+            background: hsl(var(--secondary));
+            border-radius: 1.5rem;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            border: 1px solid hsl(var(--border));
+            box-shadow: 0 30px 60px -12px rgba(0,0,0,0.6);
+            margin-bottom: 3rem;
+        }
+
+        .countdown-poster { width: 100%; height: 100%; object-fit: cover; }
+        
+        .countdown-body {
+            padding: 3rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .timer {
+            display: flex;
+            gap: 2rem;
+            margin: 2.5rem 0;
+        }
+
+        .timer-item { text-align: center; }
+        .timer-val { font-size: 4.5rem; font-weight: 900; line-height: 1; letter-spacing: -0.05em; }
+        .timer-label { 
+            font-size: 0.75rem; 
+            text-transform: uppercase; 
+            font-weight: 800; 
+            color: hsl(var(--muted-foreground)); 
+            margin-top: 0.75rem;
+            letter-spacing: 0.1em;
+        }
+
+        .badge {
+            background: hsl(var(--primary));
+            color: black;
+            padding: 0.35rem 0.85rem;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            width: fit-content;
+            margin-bottom: 1rem;
+        }
+
+        .show-details {
+            margin-bottom: 2rem;
+            color: hsl(var(--muted-foreground));
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .show-meta-tags {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .meta-tag {
+            background: hsla(var(--foreground), 0.1);
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .btn {
+            background: white;
+            color: black;
+            padding: 0 2rem;
+            height: 56px;
+            border-radius: var(--radius);
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover { opacity: 0.9; }
+
+        .time-box {
+            background: hsla(var(--foreground), 0.05);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 2rem;
+            border-left: 4px solid hsl(var(--primary));
+        }
+
+        .time-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+        }
+        .time-row:last-child { margin-bottom: 0; }
+        .time-label { color: hsl(var(--muted-foreground)); font-weight: 600; }
+        .time-value { font-weight: 700; }
+
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: hsl(var(--secondary));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            margin-top: 0.75rem;
+            overflow: hidden;
+            z-index: 2000;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            display: none;
+        }
+
+        .result-item {
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            cursor: pointer;
+        }
+
+        .result-item:hover { background: hsla(var(--primary), 0.1); }
+        .result-item img { width: 44px; height: 64px; border-radius: 6px; object-fit: cover; }
+
+        .hidden { display: none !important; }
+
+        @media (max-width: 1000px) {
+            .countdown-hero { grid-template-columns: 1fr; }
+            .countdown-poster { height: 400px; }
+            .countdown-body { padding: 2rem; align-items: flex-start; }
+            .timer { flex-wrap: wrap; gap: 1rem; }
+            .timer-val { font-size: 3rem; }
+            .hero h1 { font-size: 3rem; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-content">
+            <a href="/" class="logo" id="homeLogo">
+                TV<span>TRACK</span>
+            </a>
+            <div class="search-wrapper">
+                <input type="text" id="searchInput" placeholder="Search any show..." autocomplete="off">
+                <div id="searchResults" class="search-results"></div>
+            </div>
+        </div>
+    </nav>
+
+    <div id="homeHero" class="hero">
+        <h1>Track every episode.</h1>
+        <p>Precise, real-time countdowns synchronized with global network schedules. Never miss a release in your local timezone.</p>
+    </div>
+
+    <main>
+        <div id="countdownView" class="countdown-view-container hidden">
+            <div class="countdown-hero">
+                <img id="mainPoster" class="countdown-poster" src="" alt="">
+                <div class="countdown-body">
+                    <div id="airingBadge" class="badge">Next Episode</div>
+                    <h2 id="showName" style="font-size: 3rem; font-weight: 900; letter-spacing: -0.05em; line-height: 1.1;"></h2>
+                    <p id="episodeInfo" style="font-size: 1.25rem; color: hsl(var(--muted-foreground)); margin-top: 0.5rem; font-weight: 500;"></p>
+                    
+                    <div id="showSummary" class="show-details"></div>
+
+                    <div class="timer" id="timer">
+                        <div class="timer-item"><div class="timer-val">00</div><div class="timer-label">Days</div></div>
+                        <div class="timer-item"><div class="timer-val">00</div><div class="timer-label">Hrs</div></div>
+                        <div class="timer-item"><div class="timer-val">00</div><div class="timer-label">Mins</div></div>
+                        <div class="timer-item"><div class="timer-val">00</div><div class="timer-label">Secs</div></div>
+                    </div>
+
+                    <div style="display: flex; gap: 1.5rem; align-items: center;">
+                        <button id="shareBtn" class="btn">🔗 Copy Share Link</button>
+                        <div id="ratingBox" class="meta-tag" style="background: #f59e0b; color: black; padding: 0.5rem 1rem; font-size: 1rem; border-radius: 8px;"></div>
+                    </div>
+
+                    <div class="time-box">
+                        <div class="time-row">
+                            <span class="time-label">🌍 Original Broadcast</span>
+                            <span class="time-value" id="originalTimeText"></span>
+                        </div>
+                        <div class="time-row">
+                            <span class="time-label">📍 Your Local Time</span>
+                            <span class="time-value" id="localTimeText"></span>
+                        </div>
+                    </div>
+
+                    <div id="showTags" class="show-meta-tags"></div>
+                </div>
+            </div>
+
+            <div style="margin-top: 5rem;">
+                <div class="section-header">
+                    <h3 class="section-title">Schedule & Future Episodes</h3>
+                </div>
+                <div id="upcomingGrid" class="grid"></div>
+            </div>
+        </div>
+
+        <div id="homeGrid">
+            <div class="section-header">
+                <h3 class="section-title">Trending Shows</h3>
+            </div>
+            <div id="trendingGrid" class="grid"></div>
+        </div>
+    </main>
+
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        const trendingGrid = document.getElementById('trendingGrid');
+        const countdownView = document.getElementById('countdownView');
+        const homeHero = document.getElementById('homeHero');
+        const homeGrid = document.getElementById('homeGrid');
+        const homeLogo = document.getElementById('homeLogo');
+        
+        let countdownTimer = null;
+        let selectedShow = null;
+
+        const TRENDING = ["House of the Dragon", "The Boys", "The Bear", "Stranger Things", "Invincible", "The Last of Us"];
+
+        window.onload = async () => {
+            loadTrending();
+            const p = new URLSearchParams(window.location.search);
+            if (p.has('id')) loadFromParams(p.get('id'), p.get('s'), p.get('e'));
+        };
+
+        // Home Navigation
+        homeLogo.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.history.pushState({}, '', '/');
+            goHome();
+        });
+
+        function goHome() {
+            homeHero.style.display = 'block';
+            homeGrid.style.display = 'block';
+            countdownView.classList.add('hidden');
+            searchInput.value = '';
+            if (countdownTimer) clearInterval(countdownTimer);
+        }
+
+        async function loadTrending() {
+            trendingGrid.innerHTML = '';
+            for (const name of TRENDING) {
+                const res = await fetch(`https://api.tvmaze.com/singlesearch/shows?q=${name}`);
+                const show = await res.json();
+                createCard(show, trendingGrid);
+            }
+        }
+
+        function createCard(show, container) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.onclick = () => selectShow(show.id, show.name);
+            card.innerHTML = `
+                <img src="${show.image?.medium || ''}" alt="">
+                <div class="card-info">
+                    <div class="card-title">${show.name}</div>
+                    <div class="card-meta">${show.premiered?.split('-')[0] || 'TBD'} • ⭐ ${show.rating?.average || 'N/A'}</div>
+                </div>
+            `;
+            container.appendChild(card);
+        }
+
+        searchInput.addEventListener('input', async (e) => {
+            const q = e.target.value.trim();
+            if (q.length < 2) return searchResults.style.display = 'none';
+            const res = await fetch(`https://api.tvmaze.com/search/shows?q=${q}`);
+            const data = await res.json();
+            searchResults.innerHTML = data.map(i => `
+                <div class="result-item" onclick="selectShow(${i.show.id}, '${i.show.name.replace(/'/g, "\\'")}')">
+                    <img src="${i.show.image?.medium || ''}">
+                    <div>
+                        <div style="font-weight: 700;">${i.show.name}</div>
+                        <div style="font-size: 0.75rem; color: #94a3b8;">${i.show.premiered?.split('-')[0] || ''} • ⭐ ${i.show.rating?.average || 'N/A'}</div>
+                    </div>
+                </div>
+            `).join('');
+            searchResults.style.display = 'block';
+        });
+
+        async function selectShow(id, name) {
+            searchResults.style.display = 'none';
+            searchInput.value = name;
+            homeHero.style.display = 'none';
+            homeGrid.style.display = 'none';
+            countdownView.classList.remove('hidden');
+
+            const res = await fetch(`https://api.tvmaze.com/shows/${id}?embed=episodes`);
+            const show = await res.json();
+            selectedShow = show;
+
+            document.getElementById('mainPoster').src = show.image?.original || show.image?.medium || '';
+            document.getElementById('showName').textContent = show.name;
+            document.getElementById('showSummary').innerHTML = show.summary || "No description available.";
+            document.getElementById('ratingBox').textContent = `⭐ ${show.rating?.average || 'N/A'}`;
+            
+            document.getElementById('showTags').innerHTML = [
+                ...(show.genres || []),
+                show.network?.name || show.webChannel?.name,
+                show.status
+            ].filter(Boolean).map(t => `<span class="meta-tag">${t}</span>`).join('');
+
+            const now = new Date();
+            const episodes = show._embedded.episodes;
+            
+            // Find next episode
+            const upcoming = episodes.filter(ep => {
+                const airtime = ep.airstamp ? new Date(ep.airstamp) : new Date(ep.airdate + 'T23:59:59');
+                return airtime > now;
+            });
+
+            if (upcoming.length > 0) {
+                const ep = upcoming[0];
+                const ts = ep.airstamp || ep.airdate + 'T21:00:00';
+                startCountdown(ep.season, ep.number, ep.name, ts, ep);
+                
+                document.getElementById('upcomingGrid').innerHTML = upcoming.slice(0, 12).map(u => `
+                    <div class="card" onclick="startCountdown(${u.season}, ${u.number}, '${u.name.replace(/'/g, "\\'")}', '${u.airstamp || u.airdate + 'T21:00:00'}', ${JSON.stringify(u).replace(/"/g, '&quot;')})">
+                        <img src="${u.image?.medium || show.image?.medium || ''}">
+                        <div class="card-info">
+                            <div class="card-title">S${u.season}E${u.number}: ${u.name}</div>
+                            <div class="card-meta">${new Date(u.airstamp || u.airdate).toLocaleDateString()}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function startCountdown(s, e, title, airstamp, epData) {
+            if (countdownTimer) clearInterval(countdownTimer);
+            const target = new Date(airstamp);
+            document.getElementById('episodeInfo').textContent = `Season ${s}, Episode ${e}: "${title}"`;
+            
+            // Local Time
+            document.getElementById('localTimeText').textContent = target.toLocaleString([], { 
+                dateStyle: 'full', 
+                timeStyle: 'short' 
+            });
+
+            // Original Time
+            const netName = selectedShow.network?.name || selectedShow.webChannel?.name || 'Streaming';
+            const country = selectedShow.network?.country?.name || 'US';
+            document.getElementById('originalTimeText').textContent = `${epData.airtime || 'N/A'} on ${netName} (${country})`;
+
+            const update = () => {
+                const diff = target - new Date();
+                if (diff <= 0) {
+                    document.getElementById('timer').innerHTML = '<div style="font-size: 2.5rem; font-weight: 900; color: hsl(var(--primary));">AVAILABLE NOW 🚀</div>';
+                    return clearInterval(countdownTimer);
+                }
+                const d = Math.floor(diff / 864e5), h = Math.floor(diff % 864e5 / 36e5), m = Math.floor(diff % 36e5 / 6e4), sec = Math.floor(diff % 6e4 / 1e3);
+                document.getElementById('timer').innerHTML = `
+                    <div class="timer-item"><div class="timer-val">${String(d).padStart(2,'0')}</div><div class="timer-label">Days</div></div>
+                    <div class="timer-item"><div class="timer-val">${String(h).padStart(2,'0')}</div><div class="timer-label">Hrs</div></div>
+                    <div class="timer-item"><div class="timer-val">${String(m).padStart(2,'0')}</div><div class="timer-label">Mins</div></div>
+                    <div class="timer-item"><div class="timer-val">${String(sec).padStart(2,'0')}</div><div class="timer-label">Secs</div></div>
+                `;
+            };
+            update();
+            countdownTimer = setInterval(update, 1000);
+
+            const url = new URL(window.location);
+            url.searchParams.set('id', selectedShow.id);
+            url.searchParams.set('s', s);
+            url.searchParams.set('e', e);
+            window.history.pushState({}, '', url);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        document.getElementById('shareBtn').onclick = () => {
+            navigator.clipboard.writeText(window.location.href);
+            const b = document.getElementById('shareBtn');
+            b.textContent = '✅ Copied!';
+            setTimeout(() => b.textContent = '🔗 Copy Share Link', 2000);
+        };
+
+        async function loadFromParams(id, s, e) {
+            await selectShow(id, '');
+            const res = await fetch(`https://api.tvmaze.com/shows/${id}/episodebynumber?season=${s}&number=${e}`);
+            const ep = await res.json();
+            startCountdown(s, e, ep.name, ep.airstamp || ep.airdate + 'T21:00:00', ep);
+        }
+
+        document.addEventListener('click', (e) => { if (!searchInput.contains(e.target)) searchResults.style.display = 'none'; });
+    </script>
+</body>
+</html>

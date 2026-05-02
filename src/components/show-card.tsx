@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import type { TVShow, Episode } from "@/types/tvmaze";
 import { Star, Timer } from "lucide-react";
 
@@ -75,20 +76,27 @@ export function ShowCard({ show, onClick }: ShowCardProps) {
           {show.name}
         </h3>
         <div className="flex items-center justify-between mt-1">
-          <div className="flex items-center gap-2 text-[11px] font-medium text-muted-foreground">
+          <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
             <span>{show.premiered?.split("-")[0] || "TBD"}</span>
+            <span>•</span>
+            <span className={`px-1 rounded ${show.status === 'Running' ? 'text-green-500 bg-green-500/10' : 'text-muted-foreground bg-secondary/50'}`}>
+              {show.status === 'Running' ? 'On' : 'Off'}
+            </span>
             <span>•</span>
             <div className="flex items-center gap-0.5">
               <Star className="h-3 w-3 fill-amber-500 stroke-amber-500" />
               <span>{show.rating?.average || "N/A"}</span>
             </div>
           </div>
-          {nextEp && (
-            <span className="text-[10px] font-black text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-              S{nextEp.season}E{nextEp.number}
-            </span>
-          )}
         </div>
+        {nextEp && (
+          <div className="mt-2 text-[10px] font-bold text-primary flex items-center gap-1">
+             <Badge variant="outline" className="h-4 px-1 text-[9px] font-black border-primary/30 text-primary">
+               S{nextEp.season}E{nextEp.number}
+             </Badge>
+             <span className="line-clamp-1 opacity-60">"{nextEp.name}"</span>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

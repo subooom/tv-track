@@ -11,15 +11,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { signOut, type User as FirebaseUser } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { Link } from "@tanstack/react-router";
 
 interface UserDropdownProps {
   user: FirebaseUser;
   isPremium: boolean;
-  onOpenProfile: () => void;
-  onOpenSettings: () => void;
 }
 
-export function UserDropdown({ user, isPremium, onOpenProfile, onOpenSettings }: UserDropdownProps) {
+export function UserDropdown({ user, isPremium }: UserDropdownProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -40,12 +39,16 @@ export function UserDropdown({ user, isPremium, onOpenProfile, onOpenSettings }:
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem onClick={onOpenProfile}>
-            <UserCircle className="mr-2 h-4 w-4" /> Profile
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={onOpenSettings}>
-            <Settings className="mr-2 h-4 w-4" /> Settings
-          </DropdownMenuItem>
+          <Link to="/profile">
+            <DropdownMenuItem>
+              <UserCircle className="mr-2 h-4 w-4" /> Profile
+            </DropdownMenuItem>
+          </Link>
+          <Link to="/settings">
+            <DropdownMenuItem>
+              <Settings className="mr-2 h-4 w-4" /> Settings
+            </DropdownMenuItem>
+          </Link>
           {!isPremium && (
              <DropdownMenuItem className="text-primary font-bold">
                <Zap className="mr-2 h-4 w-4" /> Upgrade to Pro

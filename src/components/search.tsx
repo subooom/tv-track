@@ -1,6 +1,6 @@
 import * as React from "react";
-import { Search as SearchIcon } from "lucide-react";
-import type { TVShow, SearchResult } from "../types/tvmaze"; // Using relative path
+import { Search as SearchIcon, History, X } from "lucide-react";
+import type { TVShow, SearchResult } from "../types/tvmaze";
 import {
   CommandDialog,
   CommandEmpty,
@@ -8,7 +8,9 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandSeparator,
 } from "@/components/ui/command";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 
 interface SearchProps {
   onSelect: (show: TVShow) => void;
@@ -19,6 +21,7 @@ export function Search({ onSelect }: SearchProps) {
   const [query, setQuery] = React.useState("");
   const [results, setResults] = React.useState<SearchResult[]>([]);
   const [loading, setLoading] = React.useState(false);
+  const [recentSearches, setRecentSearches] = useLocalStorage<TVShow[]>("recent-searches", []);
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -53,6 +56,21 @@ export function Search({ onSelect }: SearchProps) {
     return () => clearTimeout(timer);
   }, [query]);
 
+  const handleSelect = (show: TVShow) => {
+    onSelect(show);
+    setRecentSearches(prev => {
+      const filtered = prev.filter(s => s.id !== show.id);
+      return [show, ...filtered].slice(0, 5);
+    });
+    setOpen(false);
+    setQuery("");
+  };
+
+  const removeRecent = (id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRecentSearches(prev => prev.filter(s => s.id !== id));
+  };
+
   return (
     <>
       <button
@@ -75,35 +93,65 @@ export function Search({ onSelect }: SearchProps) {
         />
         <CommandList>
           <CommandEmpty>{loading ? "Searching..." : "No results found."}</CommandEmpty>
-          <CommandGroup heading="Results">
-            {results.map((result) => (
-              <CommandItem
-                key={result.show.id}
-                value={result.show.name}
-                onSelect={() => {
-                  console.log("Selected:", result.show.name);
-                  onSelect(result.show);
-                  setOpen(false);
-                  setQuery("");
-                }}
-                className="flex items-center gap-4 p-2 cursor-pointer"
-              >
-                {result.show.image?.medium && (
-                  <img 
-                    src={result.show.image.medium} 
-                    alt={result.show.name} 
-                    className="h-12 w-8 rounded object-cover"
-                  />
-                )}
-                <div className="flex flex-col">
-                  <span className="font-bold">{result.show.name}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {result.show.premiered?.split("-")[0]} • ⭐ {result.show.rating?.average || "N/A"}
-                  </span>
-                </div>
-              </CommandItem>
-            ))}
-          </CommandGroup>
+          
+          {query.length < 2 && recentSearches.length > 0 && (
+            <CommandGroup heading="Recent Searches">
+              {recentSearches.map((show) => (
+                <CommandItem
+                  key={show.id}
+                  value={show.name}
+                  onSelect={() => handleSelect(show)}
+                  className="flex items-center justify-between p-2 cursor-pointer"
+                >
+                  <div className="flex items-center gap-4">
+                    <History className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex flex-col">
+                      <span className="font-bold">{show.name}</span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {show.premiered?.split("-")[0]} • {show.status}
+                      </span>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={(e) => removeRecent(show.id, e)}
+                    className="p-1 hover:bg-background rounded-full"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+
+          {results.length > 0 && (
+            <>
+              <CommandSeparator />
+              <CommandGroup heading="Results">
+                {results.map((result) => (
+                  <CommandItem
+                    key={result.show.id}
+                    value={result.show.name}
+                    onSelect={() => handleSelect(result.show)}
+                    className="flex items-center gap-4 p-2 cursor-pointer"
+                  >
+                    {result.show.image?.medium && (
+                      <img 
+                        src={result.show.image.medium} 
+                        alt={result.show.name} 
+                        className="h-12 w-8 rounded object-cover"
+                      />
+                    )}
+                    <div className="flex flex-col">
+                      <span className="font-bold">{result.show.name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {result.show.premiered?.split("-")[0]} • ⭐ {result.show.rating?.average || "N/A"}
+                      </span>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </>
+          )}
         </CommandList>
       </CommandDialog>
     </>
